@@ -11,6 +11,10 @@ uvicorn
 sse-starlette
 boto3
 streamlit==1.32.1
+# Keep the embedding runtime aligned with the LangChain 0.3 integrations.
+torch==2.6.0
+transformers==4.49.0
+sentence-transformers==3.4.1
 # missing from the langchain base image?
 langchain-openai==0.3.8
 langchain-community==0.3.19

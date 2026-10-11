@@ -145,7 +145,7 @@ async def ask(question: Question = Depends()):
         output_function = rag_chain
     result = output_function.invoke(question.text)
 
-    return {"result": result["answer"], "model": llm_name}
+    return {"result": result, "model": llm_name}
 
 
 @app.get("/generate-ticket")

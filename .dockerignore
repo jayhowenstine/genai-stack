@@ -1,6 +1,7 @@
 *
 !*.py
 !requirements.txt
+!.npmrc
 !images/*
 !front-end/*
 front-end/node_modules/*
