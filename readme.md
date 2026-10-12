@@ -16,7 +16,7 @@ cp env.example .env # first setup only; preserve an existing .env
 docker compose up -d --build
 ```
 
-The default configuration uses local `llama2` and SentenceTransformer embeddings;
+The default configuration uses local `qwen3.5:4b` and SentenceTransformer embeddings;
 no cloud API keys are required. The first start downloads the LLM, embedding model,
 and container images, so allow several minutes. Check progress with
 `docker compose logs -f pull-model api` and status with `docker compose ps`.
@@ -123,6 +123,39 @@ Here's what's in this repo:
 | Standalone Bot UI | `front-end/` | `front-end` | <http://localhost:8505> | Standalone client that uses the Standalone Bot API to interact with the model. JavaScript (Svelte) front-end. |
 
 The database can be explored at <http://localhost:7474>.
+
+### Enhanced local coding path
+
+The API includes a bounded validation-and-repair loop for small local models. It
+uses native Ollama with thinking disabled, requires Python-only output, validates
+syntax and module shape, and sends concise failure feedback for at most two repair
+turns. This avoids the long thinking loops observed with Qwen3.5 4B while giving
+the model a chance to correct malformed output.
+
+All Python tests run in an isolated Docker service. No local Python environment is
+required:
+
+```bash
+make test
+```
+
+The test container uses Python 3.12 and uv with the checked-in lockfile. It has no
+network, a read-only root filesystem, no Linux capabilities, and only a 64 MiB
+temporary filesystem. It does not start Ollama, Neo4j, or the application services.
+`make test` rebuilds the test image when source or dependency inputs change.
+
+With the API running, call the coding route with JSON:
+
+```bash
+curl -X POST http://localhost:8504/code \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Write a Python function add(a, b) that returns their sum.","max_repairs":2}'
+```
+
+The public API performs structural validation only. Application code can import
+`CodingAssistant` and supply a stronger validator, such as restricted executable
+tests. Model-generated code is returned as data and is never executed by this
+service.
 
 ## App 1 - Support Agent Bot
 

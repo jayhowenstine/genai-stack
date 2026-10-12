@@ -14,7 +14,7 @@ from chains import (
     generate_ticket,
 )
 from fastapi import FastAPI, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from langchain.callbacks.base import BaseCallbackHandler
 from threading import Thread
 from queue import Queue, Empty
@@ -22,13 +22,14 @@ from collections.abc import Generator
 from sse_starlette.sse import EventSourceResponse
 from fastapi.middleware.cors import CORSMiddleware
 import json
+from coding_assistant import CodingAssistant, OllamaChatClient
 
 load_dotenv(".env")
 
 url = os.getenv("NEO4J_URI")
 username = os.getenv("NEO4J_USERNAME")
 password = os.getenv("NEO4J_PASSWORD")
-ollama_base_url = os.getenv("OLLAMA_BASE_URL")
+ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
 embedding_model_name = os.getenv("EMBEDDING_MODEL")
 llm_name = os.getenv("LLM")
 # Remapping for Langchain Neo4j integration
@@ -119,6 +120,11 @@ class BaseTicket(BaseModel):
     text: str
 
 
+class CodingQuestion(BaseModel):
+    text: str
+    max_repairs: int = Field(default=2, ge=0, le=3)
+
+
 @app.get("/query-stream")
 def qstream(question: Question = Depends()):
     output_function = llm_chain
@@ -156,3 +162,20 @@ async def generate_ticket_api(question: BaseTicket = Depends()):
         input_question=question.text,
     )
     return {"result": {"title": new_title, "text": new_question}, "model": llm_name}
+
+
+@app.post("/code")
+async def code(question: CodingQuestion):
+    """Generate Python and repair malformed output with bounded local validation."""
+    assistant = CodingAssistant(
+        OllamaChatClient(model=llm_name, base_url=ollama_base_url),
+        max_repairs=question.max_repairs,
+    )
+    result = assistant.solve(question.text)
+    return {
+        "result": result.source,
+        "passed": result.passed,
+        "attempts": result.attempts,
+        "feedback": result.feedback,
+        "model": llm_name,
+    }

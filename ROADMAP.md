@@ -12,6 +12,13 @@ Streamlit demos, a FastAPI service, and a Svelte frontend. The existing loader a
 retrieval query target Stack Overflow questions and answers. They do not index
 project code or provide editor tools.
 
+The first application-level enhancement for the 4B model is now implemented in
+`coding_assistant.py`: explicit non-thinking generation, strict source extraction,
+local-only Ollama access, and a bounded validate-and-repair loop. The API exposes
+structural validation through `POST /code`; trusted local integrations can inject
+restricted executable tests as the validator. This keeps model execution separate
+from validation and avoids executing generated code in the web service.
+
 VS Code integration uses the official Ollama extension and Qwen3.5 4B, following
 the provider's recommendation for coding with agent tools.
 See [editor setup](docs/vscode.md). VS Code talks directly to Ollama; connecting

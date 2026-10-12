@@ -1,6 +1,10 @@
 *
 !*.py
 !requirements.txt
+!pyproject.toml
+!uv.lock
+!tests/
+!tests/**
 !.npmrc
 !images/*
 !front-end/*

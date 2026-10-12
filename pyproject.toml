@@ -1,0 +1,14 @@
+[project]
+name = "genai-stack-hello-world"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pytest>=8.3,<9",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -p no:cacheprovider"
